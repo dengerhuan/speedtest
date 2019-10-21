@@ -130,6 +130,19 @@
       }
     });
 
+         // 绘制指标
+    chart.guide().arc({
+      zIndex: 1,
+      start: [0, 0.6],
+      end: [val, 0.6],
+      style: {
+        stroke: 'l(0) 0:#01affe 1:#42e6f3',
+        lineWidth: 80,
+        strokeOpacity: 0.2
+      },
+    });
+
+
     val >= 2 && chart.guide().arc({
       zIndex: 1,
       start: [0, 0.92],
