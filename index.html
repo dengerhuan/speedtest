@@ -1,10 +1,10 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width,height=device-height">
-  <title>仪表盘（多色）</title>
-  <style>::-webkit-scrollbar{display:none;}html,body{overflow:hidden;height:100%;margin:0;}</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width,height=device-height">
+    <title>仪表盘（多色）</title>
+    <style>::-webkit-scrollbar{display:none;}html,body{overflow:hidden;height:100%;margin:0;}</style>
 </head>
 <body>
 <div id="mountNode"></div>
@@ -26,42 +26,35 @@
   var Shape = G2.Shape;
   // 自定义Shape 部分
   Shape.registerShape('point', 'pointer', {
-    drawShape(cfg, group) {
-      const point = cfg.points[0];
-
-
-      const center = this.parsePoint({x: 0, y: 0});
-
-      const target = this.parsePoint({x: point.x, y: 0.7});
-
-      const dirBec = {x: center.x - target.x, y: center.y - target.y};
-
-      const length = Math.sqrt(dirBec.x * dirBec.x + dirBec.y * dirBec.y);
-
-      dirBec.x *= 1 / length;
-      dirBec.y *= 1 / length;
-
-
-      const angle1 = -Math.PI / 2;
-      const angle2 = Math.PI / 2;
-
-
-      const xOne = Math.cos(angle1) * dirBec.x - Math.sin(angle1) * dirBec.y;
-      const yOne = Math.sin(angle1) * dirBec.x + Math.cos(angle1) * dirBec.y;
-      const xTwo = Math.cos(angle2) * dirBec.x - Math.sin(angle2) * dirBec.y;
-      const yTwo = Math.sin(angle2) * dirBec.x + Math.cos(angle2) * dirBec.y;
-
-
-      const l = 4;
-      const s = 6;
-      const path = [['M', target.x + xOne * l, target.y + yOne * l], ['L', center.x + xOne * s, center.y + yOne * s],
-        ['L', center.x + xTwo * s, center.y + yTwo * s], ['L', target.x + xTwo * l, target.y + yTwo * l], ['Z']];
-      return group.addShape('path', {
-        attrs: {path, fill: 'l(90) 0:#ffffff 1:#161929'},
+    drawShape: function drawShape(cfg, group) {
+      var center = this.parsePoint({ // 获取极坐标系下画布中心点
+        x: 0,
+        y: 0
       });
-    },
+      // 绘制指针
+      group.addShape('line', {
+        attrs: {
+          x1: center.x,
+          y1: center.y,
+          x2: cfg.x,
+          y2: cfg.y,
+          stroke: cfg.color,
+          lineWidth: 5,
+          lineCap: 'round'
+        }
+      });
+      return group.addShape('circle', {
+        attrs: {
+          x: center.x,
+          y: center.y,
+          r: 9.75,
+          stroke: cfg.color,
+          lineWidth: 4.5,
+          fill: '#fff'
+        }
+      });
+    }
   });
-
 
   var color = ['#0086FA', '#FFBF00', '#F5222D'];
   var chart = new G2.Chart({
@@ -124,49 +117,68 @@
   function draw(data) {
     var val = data[0].value;
     var lineWidth = 25;
-
-    const guide = chart.guide();
-    guide.clear();
+    chart.guide().clear();
     // 绘制仪表盘背景
-    guide.arc({
+    chart.guide().arc({
       zIndex: 0,
       top: false,
-      start: [0, 0.95],
-      end: [100, 0.95],
-      style: {
-        stroke: '#111421',
-        lineWidth: 16,
-      },
+      start: [0, 0.92],
+      end: [6, 0.92],
+      style: { // 底灰色
+        stroke: '#CBCBCB',
+        lineWidth: lineWidth
+      }
     });
 
-    var color = 'l(0) 0:#01affe 1:#42e6f3';
-
-
-    // 绘制指标
-    guide.arc({
+    val >= 2 && chart.guide().arc({
       zIndex: 1,
-      start: [0, 0.95],
-      end: [val, 0.95],
+      start: [0, 0.92],
+      end: [val, 0.92],
       style: {
-        stroke: color,
-        lineWidth: 16,
-      },
+        stroke: color[0],
+        lineWidth: lineWidth
+      }
     });
 
-    // 绘制指标
-    guide.arc({
+    val >= 4 && chart.guide().arc({
       zIndex: 1,
-      start: [0, 0.6],
-      end: [val, 0.6],
+      start: [2, 0.92],
+      end: [4, 0.92],
       style: {
-        stroke: color,
-        lineWidth: 80,
-        strokeOpacity: 0.2
-      },
+        stroke: color[1],
+        lineWidth: lineWidth
+      }
     });
 
+    val > 4 && val <= 6 && chart.guide().arc({
+      zIndex: 1,
+      start: [4, 0.92],
+      end: [val, 0.92],
+      style: {
+        stroke: color[2],
+        lineWidth: lineWidth
+      }
+    });
 
+    val > 2 && val <= 4 && chart.guide().arc({
+      zIndex: 1,
+      start: [2, 0.92],
+      end: [val, 0.92],
+      style: {
+        stroke: color[1],
+        lineWidth: lineWidth
+      }
+    });
 
+    val < 2 && chart.guide().arc({
+      zIndex: 1,
+      start: [0, 0.92],
+      end: [val, 0.92],
+      style: {
+        stroke: color[0],
+        lineWidth: lineWidth
+      }
+    });
 
     // 绘制指标数字
     chart.guide().html({
