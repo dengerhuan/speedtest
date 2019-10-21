@@ -1,20 +1,180 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8">
-  <title>Speedtest</title>
-
-  <script
-    src="https://webapi.amap.com/maps?v=1.4.8&key=15cd8a57710d40c9b7c0e3cc120f1200&plugin=Map3D"
-  ></script>
-
-
-  <!--<script src="https://webapi.amap.com/maps?v=1.4.8&key=7f451cf7d6c5c8efe4bc0f4a96647d88&plugin=Map3D"></script>-->
-
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <link rel="icon" type="image/x-icon" href="favicon.ico">
-<link rel="stylesheet" href="styles.e9877eebd9836fc50987.css"></head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,height=device-height">
+  <title>仪表盘（多色）</title>
+  <style>::-webkit-scrollbar{display:none;}html,body{overflow:hidden;height:100%;margin:0;}</style>
+</head>
 <body>
-<app-root></app-root>
-<script src="runtime-es2015.3b4bb4a55d07bd9d2650.js" type="module"></script><script src="runtime-es5.3b4bb4a55d07bd9d2650.js" nomodule defer></script><script src="polyfills-es5.931f63c2feef40f602a6.js" nomodule defer></script><script src="polyfills-es2015.0ef207fb7b4761464817.js" type="module"></script><script src="scripts.d85511b6beb9bfd2fafe.js" defer></script><script src="main-es2015.d0f294b28b05ed702efb.js" type="module"></script><script src="main-es5.d0f294b28b05ed702efb.js" nomodule defer></script></body>
+<div id="mountNode"></div>
+<script>/*Fixing iframe window.innerHeight 0 issue in Safari*/document.body.clientHeight;</script>
+<script src="https://gw.alipayobjects.com/os/antv/pkg/_antv.g2-3.5.1/dist/g2.min.js"></script>
+<script src="https://gw.alipayobjects.com/os/antv/pkg/_antv.data-set-0.10.1/dist/data-set.min.js"></script>
+<script src="https://gw.alipayobjects.com/os/antv/assets/lib/jquery-3.2.1.min.js"></script>
+<script>
+  function creatData() {
+    var data = [];
+    var val = Math.random() * 6;
+    val = val.toFixed(1);
+    data.push({
+      value: val * 1
+    });
+    return data;
+  }
+
+  var Shape = G2.Shape;
+  // 自定义Shape 部分
+  Shape.registerShape('point', 'pointer', {
+    drawShape(cfg, group) {
+      const point = cfg.points[0];
+
+
+      const center = this.parsePoint({x: 0, y: 0});
+
+      const target = this.parsePoint({x: point.x, y: 0.7});
+
+      const dirBec = {x: center.x - target.x, y: center.y - target.y};
+
+      const length = Math.sqrt(dirBec.x * dirBec.x + dirBec.y * dirBec.y);
+
+      dirBec.x *= 1 / length;
+      dirBec.y *= 1 / length;
+
+
+      const angle1 = -Math.PI / 2;
+      const angle2 = Math.PI / 2;
+
+
+      const xOne = Math.cos(angle1) * dirBec.x - Math.sin(angle1) * dirBec.y;
+      const yOne = Math.sin(angle1) * dirBec.x + Math.cos(angle1) * dirBec.y;
+      const xTwo = Math.cos(angle2) * dirBec.x - Math.sin(angle2) * dirBec.y;
+      const yTwo = Math.sin(angle2) * dirBec.x + Math.cos(angle2) * dirBec.y;
+
+
+      const l = 4;
+      const s = 6;
+      const path = [['M', target.x + xOne * l, target.y + yOne * l], ['L', center.x + xOne * s, center.y + yOne * s],
+        ['L', center.x + xTwo * s, center.y + yTwo * s], ['L', target.x + xTwo * l, target.y + yTwo * l], ['Z']];
+      return group.addShape('path', {
+        attrs: {path, fill: 'l(90) 0:#ffffff 1:#161929'},
+      });
+    },
+  });
+
+
+  var color = ['#0086FA', '#FFBF00', '#F5222D'];
+  var chart = new G2.Chart({
+    container: 'mountNode',
+    forceFit: true,
+    height: window.innerHeight,
+    padding: [0, 0, 30, 0],
+    animate: false
+  });
+  chart.source(creatData());
+
+  chart.coord('polar', {
+    startAngle: -9 / 8 * Math.PI,
+    endAngle: 1 / 8 * Math.PI,
+    radius: 0.75
+  });
+  chart.scale('value', {
+    min: 0,
+    max: 6,
+    tickInterval: 1,
+    nice: false
+  });
+
+  chart.axis('1', false);
+  chart.axis('value', {
+    zIndex: 2,
+    line: null,
+    label: {
+      offset: -20,
+      textStyle: {
+        fontSize: 18,
+        fill: '#CBCBCB',
+        textAlign: 'center',
+        textBaseline: 'middle'
+      }
+    },
+    tickLine: {
+      length: -24,
+      stroke: '#fff',
+      strokeOpacity: 1
+    },
+    grid: null
+  });
+  chart.legend(false);
+  chart.point().position('value*1').shape('pointer').color('value', function(val) {
+    if (val < 2) {
+      return color[0];
+    } else if (val <= 4) {
+      return color[1];
+    } else if (val <= 6) {
+      return color[2];
+    }
+  }).active(false);
+
+  draw(creatData());
+  setInterval(function() {
+    draw(creatData());
+  }, 1000);
+
+  function draw(data) {
+    var val = data[0].value;
+    var lineWidth = 25;
+
+    const guide = chart.guide();
+    guide.clear();
+    // 绘制仪表盘背景
+    guide.arc({
+      zIndex: 0,
+      top: false,
+      start: [0, 0.95],
+      end: [100, 0.95],
+      style: {
+        stroke: '#111421',
+        lineWidth: 16,
+      },
+    });
+
+    var color = 'l(0) 0:#01affe 1:#42e6f3';
+
+
+    // 绘制指标
+    guide.arc({
+      zIndex: 1,
+      start: [0, 0.95],
+      end: [val, 0.95],
+      style: {
+        stroke: color,
+        lineWidth: 16,
+      },
+    });
+
+    // 绘制指标
+    guide.arc({
+      zIndex: 1,
+      start: [0, 0.6],
+      end: [val, 0.6],
+      style: {
+        stroke: color,
+        lineWidth: 80,
+        strokeOpacity: 0.2
+      },
+    });
+
+
+
+
+    // 绘制指标数字
+    chart.guide().html({
+      position: ['50%', '95%'],
+      html: '<div style="width: 300px;text-align: center;">' + '<p style="font-size: 20px; color: #545454;margin: 0;">完成率</p>' + '<p style="font-size: 36px;color: #545454;margin: 0;">' + val * 10 + '%</p>' + '</div>'
+    });
+    chart.changeData(data);
+  }
+</script>
+</body>
 </html>
